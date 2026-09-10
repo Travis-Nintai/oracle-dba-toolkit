@@ -21,6 +21,9 @@ Current scripts:
 |---|---|
 | `sql/tablespace_utilization.sql` | Tablespace usage with warn/critical flags and a scheduler-friendly exit code |
 | `sql/db_health_check.sql` | One-pass daily health summary: instance, sessions, invalid objects, space, FRA, RMAN |
+| `sql/blocking_sessions.sql` | Blocking chains: waiters, direct blockers, seconds blocked; exit 2 when found |
+| `sql/rman_backup_status.sql` | Recent RMAN jobs with type, duration, and status; exit 2 on any failure |
+| `bash/run_sql_check.sh` | Wrapper: runs any check with a timestamped log and 0/2 exit codes for schedulers |
 
 ## Usage
 
@@ -39,6 +42,32 @@ sqlplus / as sysdba @sql/db_health_check.sql
 ```
 
 Read-only. No DML or DDL, safe to run any time.
+
+Blocking sessions (30-second default threshold — edit the `DEFINE` to change it):
+
+```
+sqlplus / as sysdba @sql/blocking_sessions.sql
+```
+
+A blocked session is usually a symptom, not the problem. Work through
+`docs/blocking-session-runbook.md` before killing anything.
+
+RMAN backup status for the last 7 days:
+
+```
+sqlplus / as sysdba @sql/rman_backup_status.sql
+```
+
+Running a check on a schedule with logging:
+
+```
+bash/run_sql_check.sh -s ORCLLAB -f sql/tablespace_utilization.sql
+```
+
+The wrapper sets `ORACLE_SID`, runs the script through sqlplus, writes a
+timestamped log to `./logs`, and exits 0 when the check is clean, 2 when the
+check reports a problem or the run itself fails. See the script header for
+all options.
 
 ## Sample output
 
